@@ -94,6 +94,7 @@ export default function NavBarIndex({ ...props }: props) {
 
   function onClickLogout() {
     console.log("Logout button is clicked");
+    socket.emit("logout");
 
     setUserData(DEFAULT_CURRENT_USER);
     router.push("/login");

@@ -31,7 +31,7 @@ export default function Home() {
       return;
     }
     getUsers();
-    getMyGroups();
+    getGroups();
   }, [socket, currentUser]);
 
   function getUsers() {
@@ -52,18 +52,20 @@ export default function Home() {
     socket.emit("getUsers", currentUser.userId);
   }
 
-  function getMyGroups() {
-    // รับ response ที่ส่งมาทีเดียวทั้ง list
-    socket.on("my_groups", (groups: GroupSocketType[]) => {
-      const newGroups: { [key: string]: GroupSocketType } = {};
-      groups.forEach((group) => {
+  function getGroups() {
+    // retreive groups
+    const groupListener = (group: GroupSocketType) => {
+      setGroups((prevGroups: { [key: string]: GroupSocketType }) => {
+        const newGroups = { ...prevGroups };
         newGroups[group._id] = group;
+        return newGroups;
       });
-      setGroups(newGroups);
-    });
-
-    // ส่ง request ไปหา server
-    socket.emit("get_my_groups", currentUser.userId);
+    };
+    socket.on("get_groups_response", (res: ResType) =>
+      console.log("Get Groups Status:", res.message)
+    );
+    socket.on("group", groupListener);
+    socket.emit("getGroups");
   }
 
   if (!socket.connected) {
