@@ -2,8 +2,10 @@ import { Box, IconButton, TextField, Typography } from "@mui/material";
 import { useContext, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
+import LoginIcon from "@mui/icons-material/Login";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+
 import useModal from "@/hook/useModal";
 import Dialog from "../common/Dialog";
 import withFooter from "@/hoc/Layout/withFooter";
@@ -11,103 +13,144 @@ import { SocketContext } from "@/context/SocketContext";
 import { ResType } from "@/type/Socket";
 import { useAuth } from "@/context/AuthContext";
 
-function CreateGroup() {
+function CreateJoinGroup() {
   const socket = useContext(SocketContext);
   const { user } = useAuth();
 
-  const [newGroupName, setNewGroupName] = useState<string>("");
-  const [isError, setIsError] = useState<boolean>(false);
-  const [errMsg, setErrMsg] = useState<string>("");
+  const [newGroupName, setNewGroupName] = useState("");
+  const [joinGroupId, setJoinGroupId] = useState("");
 
-  const modal = useModal();
+  const [isError, setIsError] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
 
-  // socket.on("group", (group: any) => {
-  //   console.log("New Group Created:", group.name);
-  //   console.log("Members in group:", group.members);
-  // });
+  const createModal = useModal();
+  const joinModal = useModal();
 
-  function handleChangeNewGroupName(
-    event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ): void {
-    if (event.target.value.length === 0) {
-      setIsError(true);
-    } else {
-      setIsError(false);
-    }
-    setNewGroupName(event.target.value);
+  function handleChangeNewGroupName(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setNewGroupName(value);
+    setIsError(value.length === 0);
+  }
+
+  function handleChangeJoinGroupId(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setJoinGroupId(value);
+    setIsError(false);
   }
 
   function handleCreateGroup() {
-    if (!user) {
-      console.error("No user logged in");
-      return;
-    }
-
-    if (newGroupName.length === 0) {
+    if (!user) return;
+    if (newGroupName.trim().length === 0) {
       setIsError(true);
-      setErrMsg("group name cannot be blank");
+      setErrMsg("Group name cannot be blank");
       return;
     }
 
-    // console.log("Create Group Name:", newGroupName);
     socket.once("create_group_response", (res: ResType) => {
-      console.log("Create Group Status:", res.message);
       if (res.message === "GroupName already in use") {
         setErrMsg(res.message);
         setIsError(true);
         return;
       }
       setNewGroupName("");
-      modal.onClose();
+      createModal.onClose();
     });
-    // console.log("userId", user.userId);
 
     socket.emit("createGroup", {
       groupName: newGroupName,
       userId: user.userId,
     });
-    // console.log("emit createGroup", newGroupName, user.userId);
+  }
+
+  function handleJoinGroup() {
+    if (!user || joinGroupId.trim().length === 0) {
+      setIsError(true);
+      setErrMsg("Group ID is required");
+      return;
+    }
+
+    socket.once("join_group_response", (res: any) => {
+      if (res.message !== "Success") {
+        setIsError(true);
+        setErrMsg(res.message);
+        return;
+      }
+      setJoinGroupId("");
+      joinModal.onClose();
+    });
+
+    socket.emit("joinGroup", {
+      groupId: joinGroupId,
+      userId: user.userId,
+    });
   }
 
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}>
-        <Typography sx={{ alignContent: "center" }}>Create Group</Typography>
-        <IconButton
-          onClick={() => {
-            setNewGroupName("");
-            setIsError(false);
-            modal.onOpen();
-          }}>
-          <AddIcon />
-        </IconButton>
+      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Typography>Create / Join Group</Typography>
+        <Box>
+          <IconButton
+            onClick={() => {
+              setNewGroupName("");
+              setIsError(false);
+              createModal.onOpen();
+            }}>
+            <AddIcon />
+          </IconButton>
+          <IconButton
+            onClick={() => {
+              setJoinGroupId("");
+              setIsError(false);
+              joinModal.onOpen();
+            }}>
+            <LoginIcon />
+          </IconButton>
+        </Box>
       </Box>
+
+      {/* Modal สำหรับสร้างกลุ่ม */}
       <Dialog
-        open={modal.open}
-        onClose={modal.onClose}
-        header={"create new group"}
+        open={createModal.open}
+        onClose={createModal.onClose}
+        header={"Create New Group"}
         content={
           <TextField
             onChange={handleChangeNewGroupName}
             inputProps={{ maxLength: 20 }}
             helperText={!isError ? `${newGroupName.length}/20` : errMsg}
+            value={newGroupName}
             error={isError}
             autoFocus
           />
         }
         iconAction={[
-          [<CloseIcon />, modal.onClose],
+          [<CloseIcon />, createModal.onClose],
           [<CheckIcon />, handleCreateGroup],
+        ]}
+      />
+
+      {/* Modal สำหรับเข้าร่วมกลุ่ม */}
+      <Dialog
+        open={joinModal.open}
+        onClose={joinModal.onClose}
+        header={"Join Group"}
+        content={
+          <TextField
+            onChange={handleChangeJoinGroupId}
+            helperText={!isError ? "Enter Group ID" : errMsg}
+            value={joinGroupId}
+            error={isError}
+            autoFocus
+          />
+        }
+        iconAction={[
+          [<CloseIcon />, joinModal.onClose],
+          [<CheckIcon />, handleJoinGroup],
         ]}
       />
     </>
   );
 }
 
-export default withFooter(CreateGroup);
+export default withFooter(CreateJoinGroup);

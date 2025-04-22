@@ -48,8 +48,11 @@ export default function NavBarIndex({ ...props }: props) {
       console.log("Update User Information Status:", res.message);
       if (res.message === SOCKET_MESSAGE.SUCCESS) {
         setImage(previewImage);
-        setUserData({ ...userData, username: newName, profileImage: previewImage });
-
+        setUserData({
+          ...userData,
+          username: newName,
+          profileImage: previewImage,
+        });
         closeEditMode();
       } else if (res.message === "Username already in use") {
         setIsError(true);
@@ -63,19 +66,18 @@ export default function NavBarIndex({ ...props }: props) {
     });
   }
 
-  // Have 2 things to update
-  // 1. username
-  // 2. image profile - have image (file) and previewImage (string)
+  // ตรวจสอบชื่อใหม่และเปลี่ยน
   function changeProfile(): void {
     if (newName.length === 0) {
       setIsError(true);
       return;
     }
 
-    // if (userData.username === newName) {
-    //   closeEditMode();
-    //   return;
-    // }
+    if (userData.username === newName) {
+      closeEditMode();
+      return;
+    }
+
     updateMe();
   }
 
@@ -87,7 +89,6 @@ export default function NavBarIndex({ ...props }: props) {
     reader.onload = () => {
       setPreviewImage(reader.result as string);
     };
-    // setPreviewImage(URL.createObjectURL(tempFile));
     event.target.value = null;
   }
 
@@ -107,53 +108,69 @@ export default function NavBarIndex({ ...props }: props) {
   function handleChangeNewName(
     event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ): void {
-    if (event.target.value.length === 0) {
+    const newUsername = event.target.value;
+    setNewName(newUsername);
+
+    // ตรวจสอบความยาวของชื่อ
+    if (newUsername.length === 0 || newUsername.length > 20) {
       setIsError(true);
     } else {
       setIsError(false);
     }
-    setNewName(event.target.value);
   }
 
   function openEditMode(): void {
     setNewName(userData.username);
     setPreviewImage(userData.profileImage);
+    setIsError(false);
     setIsEditMode(true);
   }
 
   function closeEditMode(): void {
     setIsError(false);
-    // clearImageProfile();
     setIsEditMode(false);
   }
+
   return (
     <AppBar
-      position="sticky"
+      position='sticky'
       sx={{
         borderBottom: "2px solid #000000",
         height: "80px",
         justifyContent: "center",
-      }}
-    >
+      }}>
       <Toolbar>
         {/* Profile image */}
         {isEditMode ? (
           <Box sx={{ position: "relative", marginRight: "3vw" }}>
             <IconButton
               onClick={clearImageProfile}
-              sx={{ position: "absolute", right: "-10px", zIndex: 1 }}
-            >
+              sx={{ position: "absolute", right: "-10px", zIndex: 1 }}>
               <CloseIcon />
             </IconButton>
-            <IconButton aria-label="Upload Profile Picture" component="label">
-              <input onChange={handleImageChange} hidden accept="image/*" type="file" />
-              <CameraAltIcon sx={{ position: "absolute", left: "25px", zIndex: 1 }} />
-              <Avatar src={previewImage || image} sx={{ width: 56, height: 56 }} />
+            <IconButton aria-label='Upload Profile Picture' component='label'>
+              <input
+                onChange={handleImageChange}
+                hidden
+                accept='image/*'
+                type='file'
+              />
+              <CameraAltIcon
+                sx={{ position: "absolute", left: "25px", zIndex: 1 }}
+              />
+              <Avatar
+                src={previewImage || image}
+                sx={{ width: 56, height: 56 }}
+              />
             </IconButton>
           </Box>
         ) : (
-          <Avatar src={image} sx={{ width: 56, height: 56, marginRight: "3vw" }} />
+          <Avatar
+            src={image}
+            sx={{ width: 56, height: 56, marginRight: "3vw" }}
+          />
         )}
+
         {/* Nickname */}
         <Box sx={{ flexGrow: 1 }}>
           {isEditMode ? (
@@ -165,22 +182,27 @@ export default function NavBarIndex({ ...props }: props) {
                 !isError
                   ? `${newName.length}/20`
                   : newName.length === 0
-                    ? "nickname cannot be blank"
-                    : "Username already in use"
+                  ? "Nickname cannot be blank"
+                  : "Username already in use"
               }
               error={isError}
               autoFocus
-              size="small"
-              margin="dense"
+              size='small'
+              margin='dense'
             />
           ) : (
             <Typography>{userData.username}</Typography>
           )}
         </Box>
+
         {/* Action Icon */}
         {isEditMode ? (
           <Box>
-            <IconButton onClick={() => { closeEditMode(); setImage(userData.profileImage) }}>
+            <IconButton
+              onClick={() => {
+                closeEditMode();
+                setImage(userData.profileImage);
+              }}>
               <CloseIcon />
             </IconButton>
             <IconButton onClick={changeProfile}>

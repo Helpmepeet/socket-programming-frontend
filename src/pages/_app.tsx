@@ -19,7 +19,6 @@ function App({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
       {" "}
-      {/* ครอบด้วย AuthProvider */}
       <SocketContext.Provider value={socket}>
         <ThemeProvider theme={theme}>
           <CssBaseline />

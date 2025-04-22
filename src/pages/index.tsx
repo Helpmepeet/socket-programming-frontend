@@ -31,7 +31,7 @@ export default function Home() {
       return;
     }
     getUsers();
-    getGroups();
+    getMyGroups();
   }, [socket, currentUser]);
 
   function getUsers() {
@@ -52,20 +52,18 @@ export default function Home() {
     socket.emit("getUsers", currentUser.userId);
   }
 
-  function getGroups() {
-    // retreive groups
-    const groupListener = (group: GroupSocketType) => {
-      setGroups((prevGroups: { [key: string]: GroupSocketType }) => {
-        const newGroups = { ...prevGroups };
+  function getMyGroups() {
+    // รับ response ที่ส่งมาทีเดียวทั้ง list
+    socket.on("my_groups", (groups: GroupSocketType[]) => {
+      const newGroups: { [key: string]: GroupSocketType } = {};
+      groups.forEach((group) => {
         newGroups[group._id] = group;
-        return newGroups;
       });
-    };
-    socket.on("get_groups_response", (res: ResType) =>
-      console.log("Get Groups Status:", res.message)
-    );
-    socket.on("group", groupListener);
-    socket.emit("getGroups");
+      setGroups(newGroups);
+    });
+
+    // ส่ง request ไปหา server
+    socket.emit("get_my_groups", currentUser.userId);
   }
 
   if (!socket.connected) {
@@ -84,14 +82,16 @@ export default function Home() {
         <Collapse in={collaspeClient.open}>
           {/* <Chat href={`/chat/1`} label={"TEMP USER"} type="Direct" /> */}
           {[...Object.values(users)]
-            .sort((a: UserSocketType, b: UserSocketType) => a.username.localeCompare(b.username))
+            .sort((a: UserSocketType, b: UserSocketType) =>
+              a.username.localeCompare(b.username)
+            )
             .map((user: UserSocketType, index: number) => (
               <Chat
                 key={index}
                 href={`/chat/${user.chatId}`}
                 label={user.username}
                 avatar={user.profileImage}
-                type="Direct"
+                type='Direct'
               />
             ))}
         </Collapse>
@@ -103,9 +103,16 @@ export default function Home() {
         <Collapse in={collaspeServer.open}>
           {/* <Chat href={`/group_chat/1`} label={"TEMP GROUP"} type="Group" /> */}
           {[...Object.values(groups)]
-            .sort((a: GroupSocketType, b: GroupSocketType) => a.name.localeCompare(b.name))
+            .sort((a: GroupSocketType, b: GroupSocketType) =>
+              a.name.localeCompare(b.name)
+            )
             .map((group: GroupSocketType, index: number) => (
-              <Chat key={index} href={`/group_chat/${group._id}`} label={group.name} type="Group" />
+              <Chat
+                key={index}
+                href={`/group_chat/${group._id}`}
+                label={group.name}
+                type='Group'
+              />
             ))}
         </Collapse>
       </CenterList>
