@@ -31,11 +31,11 @@ export default function Home() {
       return;
     }
     getUsers();
-    getGroups();
+    getUserGroups();
   }, [socket, currentUser]);
 
   function getUsers() {
-    // retreive users
+    // retrieve users
     const userListener = (user: UserSocketType) => {
       if (user.myUserId === currentUser.userId) {
         setUsers((prevUsers: { [key: string]: UserSocketType }) => {
@@ -52,20 +52,18 @@ export default function Home() {
     socket.emit("getUsers", currentUser.userId);
   }
 
-  function getGroups() {
-    // retreive groups
-    const groupListener = (group: GroupSocketType) => {
-      setGroups((prevGroups: { [key: string]: GroupSocketType }) => {
-        const newGroups = { ...prevGroups };
-        newGroups[group._id] = group;
-        return newGroups;
+  function getUserGroups() {
+    // Set up listener for my groups
+    socket.on("my_groups", (userGroups: GroupSocketType[]) => {
+      const groupsObject: { [key: string]: GroupSocketType } = {};
+      userGroups.forEach((group) => {
+        groupsObject[group._id] = group;
       });
-    };
-    socket.on("get_groups_response", (res: ResType) =>
-      console.log("Get Groups Status:", res.message)
-    );
-    socket.on("group", groupListener);
-    socket.emit("getGroups");
+      setGroups(groupsObject);
+    });
+
+    // Request the user's groups
+    socket.emit("get_my_groups", currentUser.userId);
   }
 
   if (!socket.connected) {
@@ -82,7 +80,6 @@ export default function Home() {
           onClick={collaspeClient.onClick}
         />
         <Collapse in={collaspeClient.open}>
-          {/* <Chat href={`/chat/1`} label={"TEMP USER"} type="Direct" /> */}
           {[...Object.values(users)]
             .sort((a: UserSocketType, b: UserSocketType) =>
               a.username.localeCompare(b.username)
@@ -103,7 +100,6 @@ export default function Home() {
           onClick={collaspeServer.onClick}
         />
         <Collapse in={collaspeServer.open}>
-          {/* <Chat href={`/group_chat/1`} label={"TEMP GROUP"} type="Group" /> */}
           {[...Object.values(groups)]
             .sort((a: GroupSocketType, b: GroupSocketType) =>
               a.name.localeCompare(b.name)

@@ -19,6 +19,7 @@ export type GroupSocketType = {
   _id: string;
   name: string;
   backgroundImage: string;
+  members: UserSocketType[];
 };
 
 export type MessageSocketType = {

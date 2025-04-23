@@ -7,6 +7,7 @@ import MenuNavBar from "./MenuNavBar";
 type props = {
   label?: string;
   chatId: string;
+  onMembersClick?: () => void;
 };
 
 NavBarGroup.defaultProps = {
@@ -16,12 +17,26 @@ NavBarGroup.defaultProps = {
 
 export default function NavBarGroup({ ...props }: props) {
   const menu = useMenu();
+
   return (
     <NavBarLayout displayComponent={<Typography>{props.label}</Typography>}>
       <>
+        {/* Members display toggle button /}
+        {props.onMembersClick && (
+          <IconButton 
+            onClick={props.onMembersClick}
+            sx={{ mr: 1 }}
+            aria-label="Toggle members list"
+          >
+            <PeopleIcon />
+          </IconButton>
+        )}
+
+        {/ Settings menu button */}
         <IconButton onClick={menu.handleOpenMenu}>
           <MoreVertIcon />
         </IconButton>
+
         <MenuNavBar
           open={menu.openMenu}
           onClose={menu.handleCloseMenu}
