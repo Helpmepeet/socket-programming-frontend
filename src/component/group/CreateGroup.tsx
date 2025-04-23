@@ -18,7 +18,7 @@ function CreateJoinGroup() {
   const { user } = useAuth();
 
   const [newGroupName, setNewGroupName] = useState("");
-  const [joinGroupId, setJoinGroupId] = useState("");
+  const [joinGroupName, setJoinGroupName] = useState("");
 
   const [isError, setIsError] = useState(false);
   const [errMsg, setErrMsg] = useState("");
@@ -32,9 +32,9 @@ function CreateJoinGroup() {
     setIsError(value.length === 0);
   }
 
-  function handleChangeJoinGroupId(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleChangeJoinGroupName(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
-    setJoinGroupId(value);
+    setJoinGroupName(value);
     setIsError(false);
   }
 
@@ -63,9 +63,9 @@ function CreateJoinGroup() {
   }
 
   function handleJoinGroup() {
-    if (!user || joinGroupId.trim().length === 0) {
+    if (!user || joinGroupName.trim().length === 0) {
       setIsError(true);
-      setErrMsg("Group ID is required");
+      setErrMsg("Group name is required");
       return;
     }
 
@@ -75,12 +75,12 @@ function CreateJoinGroup() {
         setErrMsg(res.message);
         return;
       }
-      setJoinGroupId("");
+      setJoinGroupName("");
       joinModal.onClose();
     });
 
     socket.emit("joinGroup", {
-      groupId: joinGroupId,
+      groupName: joinGroupName,
       userId: user.userId,
     });
   }
@@ -100,7 +100,7 @@ function CreateJoinGroup() {
           </IconButton>
           <IconButton
             onClick={() => {
-              setJoinGroupId("");
+              setJoinGroupName("");
               setIsError(false);
               joinModal.onOpen();
             }}>
@@ -109,7 +109,7 @@ function CreateJoinGroup() {
         </Box>
       </Box>
 
-      {/* Modal สำหรับสร้างกลุ่ม */}
+      {/* Modal for creating a group */}
       <Dialog
         open={createModal.open}
         onClose={createModal.onClose}
@@ -130,16 +130,16 @@ function CreateJoinGroup() {
         ]}
       />
 
-      {/* Modal สำหรับเข้าร่วมกลุ่ม */}
+      {/* Modal for joining a group */}
       <Dialog
         open={joinModal.open}
         onClose={joinModal.onClose}
         header={"Join Group"}
         content={
           <TextField
-            onChange={handleChangeJoinGroupId}
-            helperText={!isError ? "Enter Group ID" : errMsg}
-            value={joinGroupId}
+            onChange={handleChangeJoinGroupName}
+            helperText={!isError ? "Enter Group Name" : errMsg}
+            value={joinGroupName}
             error={isError}
             autoFocus
           />
